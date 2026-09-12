@@ -1,0 +1,3 @@
+-- fold :: (a -> a -> a) -> a -> [a] -> a
+fold _ base [] = base
+fold combine base x:xs = combine x $ fold combine base xs

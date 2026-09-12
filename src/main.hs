@@ -1,12 +1,8 @@
--- (taken, rest)
-takeWhile :: (a -> Bool) -> [a] -> ([a], [a])
-takeWhile _ "" = ("", "")
-takeWhile cond (c:cs)
-    | cond c =
-        let (taken, rest) = takeWhile cond cs in
-            (c:taken, rest)
-    | _ = ("", c:cs)
+module Main where
+
+import Lexer (derange)
 
 main :: IO ()
 main = do
     print $ span (\c -> c < 'e') "abcdef"
+    print $ derange [(3, 't'), (4, 'e'), (5, 'r'), (6, 'e')]

@@ -1,0 +1,5 @@
+-- print :: String -> IO -> IO
+
+-- main :: IO -> IO
+main = print "Hello World"
+-- equivalent to `main io = print "Hello World" io`
