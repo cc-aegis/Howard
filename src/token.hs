@@ -4,6 +4,7 @@ module Token where
 data Token =
     Ident String
     | StringLit String
+    | DefSep
     | Assign
     deriving (Show, Eq)
 

@@ -35,9 +35,14 @@ isUpperCase c = 'A' <= c && c <= 'Z'
 isDigit :: Char -> Bool
 isDigit c = '0' <= c && c <= '9'
 
+headSatisfies :: (a -> Bool) -> [a] -> Bool
+headSatisfies _ [] = False
+headSatisfies cond (a:_) = cond a
+
 next :: Enumerate Char -> CompilerResult (Ranged Token, Enumerate Char)
 next [] = Err Eof
 next ((idx, c):cs)
+    | c == '\n' && headSatisfies (\(_, c) -> not $ isSpace c) cs = Ok ((Range idx idx, DefSep), cs)
     | isSpace c = next cs
     | isLowerCase c = parseIdent ((idx, c):cs)
     -- | isUpperCase c = parseTypeIdent ((idx, c):cs)
