@@ -1,10 +1,24 @@
 module Error where
 
+type CompilerResult = Result CompilerError
+
 data CompilerError = Eof | UnexpectedChar Int
+    deriving (Show, Eq)
 
-data CompilerResult value error = Ok value | Err error
+data Result err val = Err err | Ok val 
+    deriving (Show, Eq)
 
-instance Monad CompilerResult where
-    return = Ok
-    (Ok x) >>= f = f x
-    (Err err) >>= f = Err (err)
+instance Functor (Result err) where
+    fmap _ (Err err) = Err err
+    fmap f (Ok val) = Ok (f val)
+
+instance Applicative (Result err) where
+    pure x = Ok x
+    
+    (Ok f) <*> (Ok val) = Ok (f val)
+    (Err err) <*> _ = Err err
+    _ <*> (Err err) = Err err
+
+instance Monad (Result err) where
+    (Ok val) >>= f = f val
+    (Err err) >>= _ = (Err err)

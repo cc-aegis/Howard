@@ -1,8 +1,9 @@
 module Main where
 
-import Lexer (derange)
+import Lexer (derange, tokenize)
 
 main :: IO ()
 main = do
-    print $ span (\c -> c < 'e') "abcdef"
-    print $ derange [(3, 't'), (4, 'e'), (5, 'r'), (6, 'e')]
+    let src = "main = print"
+    let tokens = tokenize $ zip [0..] src
+    print tokens

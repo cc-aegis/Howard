@@ -1,21 +1,29 @@
 module Lexer where
 
-import Token (Token)
-import Error (CompilerError, CompilerResult)
+import Token (Token(..))
+import Error (CompilerError(..), CompilerResult(..), Result(..))
 
 import Data.Char (isSpace)
-import Data.Range (Range)
 
--- tokenize :: String -> CompilerResult [Ranged Token]
+tokenize :: Enumerate Char -> CompilerResult [Ranged Token]
+tokenize src
+    | nextToken == Err Eof = Ok []
+    | otherwise = do
+        (token, srcRest) <- next src
+        tokenRest <- tokenize srcRest
+        Ok (token : tokenRest)
+    where nextToken = next src
 
+data Range a = Range a a
+    deriving (Show, Eq)
 type Enumerate a = [(Int, a)]
 type Ranged a = (Range Int, a)
 
-derange :: Enumerate a => Ranged [a]
+derange :: Enumerate a -> Ranged [a]
 derange [] = undefined
-derange as = (SpanRange start end, fmap (\(_, a) -> a) as)
+derange as = (Range start end, fmap (\(_, a) -> a) as)
     where
-        (start, _) = first as
+        (start, _) = head as
         (end, _) = last as
 
 isLowerCase :: Char -> Bool
@@ -27,23 +35,23 @@ isUpperCase c = 'A' <= c && c <= 'Z'
 isDigit :: Char -> Bool
 isDigit c = '0' <= c && c <= '9'
 
-next :: Enumerate Char -> CompilerResult (Token, Enumerate Char)
-next "" = Err Eof
+next :: Enumerate Char -> CompilerResult (Ranged Token, Enumerate Char)
+next [] = Err Eof
 next ((idx, c):cs)
     | isSpace c = next cs
     | isLowerCase c = parseIdent ((idx, c):cs)
     -- | isUpperCase c = parseTypeIdent ((idx, c):cs)
     -- | isDigit c = parseNumber ((idx, c):cs)
     -- | c == '"' = parseString ((idx, c):cs)
-    | _ = parseOperator ((idx, c):cs)
+    | otherwise = parseOperator ((idx, c):cs)
 
-parseIdent :: Enumerate Char -> CompilerResult (Token, Enumerate Char)
-parseIdent src = case fmap (\(_, c) -> c) ident of
-    | "" -> undefined -- TODO
-    | _ -> undefined -- TODO
-    where (ident, rest) = span (\c -> isLowerCase c || isUpperCase c) src
+parseIdent :: Enumerate Char -> CompilerResult (Ranged Token, Enumerate Char)
+parseIdent src = Ok ((range, Ident ident), rest)
+    where
+        (indexedIdent, rest) = span (\(_, c) -> isLowerCase c || isUpperCase c) src
+        (range, ident) = derange indexedIdent
 
-parseOperator :: [(Int, Char)] -> CompilerResult (Token, [(Int, Char)])
+parseOperator :: [(Int, Char)] -> CompilerResult (Ranged Token, [(Int, Char)])
 -- parseOperator ((_, ':'):(_, ':'):rest) = Ok (Signature, rest)
-parseOperator ((idx, '='):rest) = Ok ((SpanRange idx idx, Assign), rest)
-parseOperator ((idx, c):rest) = Err UnexpectedChar idx
+parseOperator ((idx, '='):rest) = Ok ((Range idx idx, Assign), rest)
+parseOperator ((idx, c):rest) = Err (UnexpectedChar idx)
