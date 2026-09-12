@@ -4,6 +4,5 @@ import Lexer (derange, tokenize)
 
 main :: IO ()
 main = do
-    let src = "main = print"
-    let tokens = tokenize $ zip [0..] src
-    print tokens
+    let src = "main = print 0315"
+    print $ tokenize $ zip [0..] src

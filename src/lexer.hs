@@ -1,7 +1,8 @@
 module Lexer where
 
-import Token (Token(..))
 import Error (CompilerError(..), CompilerResult(..), Result(..))
+import Token (Token(..))
+import Utils (Enumerate, Range, Ranged)
 
 import Data.Char (isSpace)
 
@@ -13,11 +14,6 @@ tokenize src
         tokenRest <- tokenize srcRest
         Ok (token : tokenRest)
     where nextToken = next src
-
-data Range a = Range a a
-    deriving (Show, Eq)
-type Enumerate a = [(Int, a)]
-type Ranged a = (Range Int, a)
 
 derange :: Enumerate a -> Ranged [a]
 derange [] = undefined
@@ -46,15 +42,22 @@ next ((idx, c):cs)
     | isSpace c = next cs
     | isLowerCase c = parseIdent ((idx, c):cs)
     -- | isUpperCase c = parseTypeIdent ((idx, c):cs)
-    -- | isDigit c = parseNumber ((idx, c):cs)
+    | isDigit c = parseNumber ((idx, c):cs)
     -- | c == '"' = parseString ((idx, c):cs)
-    | otherwise = parseOperator ((idx, c):cs)
+    | otherwise = parseOperator ((idx, c):cs) -- TODO: replace with pattern matching on next <arg>
 
 parseIdent :: Enumerate Char -> CompilerResult (Ranged Token, Enumerate Char)
 parseIdent src = Ok ((range, Ident ident), rest)
     where
         (indexedIdent, rest) = span (\(_, c) -> isLowerCase c || isUpperCase c) src
         (range, ident) = derange indexedIdent
+
+parseNumber :: Enumerate Char -> CompilerResult (Ranged Token, Enumerate Char)
+parseNumber src = Ok ((range, Number num), rest)
+    where
+        (indexedRawNum, rest) = span (\(_, c) -> isDigit c) src
+        (range, rawNum) = derange indexedRawNum
+        num = read rawNum :: Integer
 
 parseOperator :: [(Int, Char)] -> CompilerResult (Ranged Token, [(Int, Char)])
 -- parseOperator ((_, ':'):(_, ':'):rest) = Ok (Signature, rest)

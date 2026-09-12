@@ -3,7 +3,7 @@ module Token where
 -- minimal token def for hello world
 data Token =
     Ident String
-    | StringLit String
+    | Number Integer
     | DefSep
     | Assign
     deriving (Show, Eq)
